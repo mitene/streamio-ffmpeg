@@ -8,6 +8,7 @@ require 'fileutils'
 require 'webmock/rspec'
 WebMock.allow_net_connect!
 
+require 'streamio-ffmpeg'
 FFMPEG.logger = Logger.new(nil)
 
 RSpec.configure do |config|
