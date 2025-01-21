@@ -26,3 +26,4 @@ pkg
 script/*
 tmp/*
 Gemfile.lock
+vendor/bundle
