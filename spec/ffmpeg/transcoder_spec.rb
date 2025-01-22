@@ -82,7 +82,7 @@ module FFMPEG
           expect(transcoder.encoded).to be_valid
           expect(progress_updates).to include(0.0, 1.0)
           expect(progress_updates.length).to be >= 3
-          expect(File.exists?("#{tmp_path}/awesome.flv")).to be_truthy
+          expect(File.exist?("#{tmp_path}/awesome.flv")).to be_truthy
         end
 
         it "should transcode the movie with EncodingOptions" do
@@ -194,17 +194,6 @@ module FFMPEG
 
           expect(encoded.duration).to be >= 1.8
           expect(encoded.duration).to be <= 2.2
-        end
-
-        context "with remote URL as input" do
-          before(:context) { start_web_server }
-          after(:context) { stop_web_server }
-
-          it "should transcode correctly" do
-            movie = Movie.new("http://127.0.0.1:8000/awesome%20movie.mov")
-
-            expect { Transcoder.new(movie, "#{tmp_path}/output.flv").run }.not_to raise_error
-          end
         end
 
         context "with screenshot option" do

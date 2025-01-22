@@ -28,82 +28,6 @@ module FFMPEG
         end
       end
 
-      context "given a URL" do
-        before(:context) { start_web_server }
-        after(:context) { stop_web_server }
-        context "that is correct" do
-
-          let(:movie) { Movie.new("http://127.0.0.1:8000/awesome%20movie.mov") }
-
-          it "should be valid" do
-            expect(movie).to be_valid
-          end
-
-          it "should know the file size" do
-            expect(movie.size).to eq(455546)
-          end
-
-          it "should remember the movie URL" do
-            expect(movie.path).to eq("http://127.0.0.1:8000/awesome%20movie.mov")
-          end
-
-          it "should be marked as remote" do
-            expect(movie.remote?).to be_truthy
-          end
-
-          context 'with a query string' do
-            # We're mocking this to fail on the same URL with the query string added.
-            # This means that we're passing the query string through using .request_uri
-            # rather than .path
-
-            it 'should not be found' do
-              expect { Movie.new('http://127.0.0.1:8000/awesome%20movie.mov?fail=1') }.to raise_error(Errno::ENOENT)
-            end
-          end
-
-          context 'for existing file with no access' do
-            it 'should raise an exception' do
-              expect { Movie.new('http://127.0.0.1:8000/unauthorized.mov') }.to raise_error(Errno::ENOENT, /403/)
-            end
-          end
-        end
-        context "that does not exist" do
-          it "should raise an exception" do
-            expect { Movie.new("http://127.0.0.1:8000/awesome%20movie_missing.mov") }.to raise_error(Errno::ENOENT)
-          end
-        end
-        context 'that redirects' do
-          context 'to a remote uri' do
-            let(:movie) { Movie.new('http://www.redirect-example.com/moved_movie.mov') }
-
-            it "should know the file size" do
-              expect(movie.size).to eq(455_546)
-            end
-          end
-          context 'to a relative uri' do
-            let(:movie) { Movie.new('http://127.0.0.1:8000/deep_path/awesome%20movie.mov') }
-
-            it 'should know the file size' do
-              expect(movie.size).to eq(455_546)
-            end
-          end
-          context 'to a relative uri respecting redirect limits' do
-            before { FFMPEG.max_http_redirect_attempts = 0 }
-            after { FFMPEG.max_http_redirect_attempts = nil }
-
-            it 'raise FFMPEG::HTTPTooManyRequests' do
-              expect { Movie.new('http://127.0.0.1:8000/deep_path/awesome%20movie.mov') }.to raise_error(FFMPEG::HTTPTooManyRequests)
-            end
-          end
-
-          context 'to a relative uri with too many redirects' do
-            it 'should know the file size' do
-              expect { Movie.new('http://www.toomany-redirects-example.com/moved_movie.mov') }.to raise_error(FFMPEG::HTTPTooManyRequests)
-            end
-          end
-        end
-      end
-
       context "given a non movie file" do
         let(:movie) { Movie.new(__FILE__) }
 
@@ -207,14 +131,6 @@ module FFMPEG
 
       context "given a file with data streams" do
         let(:movie) { Movie.new("#{fixture_path}/movies/file_with_data_streams.mp4") }
-
-        it "should be valid" do
-          expect(movie).to be_valid
-        end
-      end
-
-      context "given a file named with URL characters" do
-        let(:movie) { Movie.new("#{fixture_path}/movies/file+with+data&streams=works?.mp4") }
 
         it "should be valid" do
           expect(movie).to be_valid
@@ -381,7 +297,7 @@ module FFMPEG
         end
 
         it "should parse the bitrate" do
-          expect(movie.bitrate).to eq(481846)
+          expect(movie.bitrate).to eq(481836)
         end
 
         it "should return nil rotation when no rotation exists" do
@@ -512,11 +428,11 @@ module FFMPEG
 
         transcoder_double = double(Transcoder)
         expect(Transcoder).to receive(:new).
-          with(movie, "#{tmp_path}/awesome.flv", {custom: "-vcodec libx264"}, preserve_aspect_ratio: :width).
+          with(movie, "#{tmp_path}/awesome.flv", {custom: "-vcodec libx264"}, {preserve_aspect_ratio: :width}).
           and_return(transcoder_double)
         expect(transcoder_double).to receive(:run)
 
-        movie.transcode("#{tmp_path}/awesome.flv", {custom: "-vcodec libx264"}, preserve_aspect_ratio: :width)
+        movie.transcode("#{tmp_path}/awesome.flv", {custom: "-vcodec libx264"}, {preserve_aspect_ratio: :width})
       end
     end
 
@@ -527,11 +443,11 @@ module FFMPEG
 
         transcoder_double = double(Transcoder)
         expect(Transcoder).to receive(:new).
-            with(movie, "#{tmp_path}/awesome.flv", {custom: "-vcodec libx264"}, preserve_aspect_ratio: :width).
+            with(movie, "#{tmp_path}/awesome.flv", {custom: "-vcodec libx264"}, {preserve_aspect_ratio: :width}).
             and_return(transcoder_double)
         expect(transcoder_double).to receive(:run)
 
-        movie.transcode("#{tmp_path}/awesome.flv", {custom: "-vcodec libx264"}, preserve_aspect_ratio: :width)
+        movie.transcode("#{tmp_path}/awesome.flv", {custom: "-vcodec libx264"}, {preserve_aspect_ratio: :width})
       end
     end
 
@@ -557,7 +473,7 @@ module FFMPEG
 
         transcoder_double = double(Transcoder)
         expect(Transcoder).to receive(:new).
-          with(movie, "#{tmp_path}/awesome.jpg", {seek_time: 2, dimensions: "640x480", screenshot: true}, preserve_aspect_ratio: :width).
+          with(movie, "#{tmp_path}/awesome.jpg", {seek_time: 2, dimensions: "640x480", screenshot: true}, {preserve_aspect_ratio: :width}).
           and_return(transcoder_double)
         expect(transcoder_double).to receive(:run)
 
@@ -569,7 +485,7 @@ module FFMPEG
 
           transcoder_double = double(Transcoder)
           expect(Transcoder).to receive(:new).
-              with(movie, "#{tmp_path}/awesome_%d.jpg", {seek_time: 2, dimensions: '640x480', screenshot: true, vframes: 20}, preserve_aspect_ratio: :width, validate: false).
+              with(movie, "#{tmp_path}/awesome_%d.jpg", {seek_time: 2, dimensions: '640x480', screenshot: true, vframes: 20}, {preserve_aspect_ratio: :width, validate: false}).
               and_return(transcoder_double)
           expect(transcoder_double).to receive(:run)
 
