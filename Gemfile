@@ -1,6 +1,6 @@
 source "https://rubygems.org"
 
-gem 'multi_json'
+gemspec
 
 group :test do
   gem 'webmock'
