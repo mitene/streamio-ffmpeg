@@ -1,7 +1,8 @@
 source "https://rubygems.org"
 
+gem 'multi_json'
+
 group :test do
-  gem 'multi_json'
   gem 'webmock'
   gem 'webrick'
   gem 'simplecov'
