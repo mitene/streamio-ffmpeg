@@ -1,3 +1,3 @@
 module FFMPEG
-  VERSION = '3.0.2'
+  VERSION = '7.1.0'
 end
