@@ -129,6 +129,18 @@ module FFMPEG
         end
       end
 
+      context "given a file with all reserved color descirptions" do
+        let(:movie) { Movie.new("#{fixture_path}/movies/all_reserved_color_desc.mp4") }
+
+        it "should be valid" do
+          expect(movie).to be_valid
+        end
+
+        it "should have reserved color descriptions" do
+          expect(movie.has_reserved_color_desc?).to be true
+        end
+      end
+
       context "given a file with data streams" do
         let(:movie) { Movie.new("#{fixture_path}/movies/file_with_data_streams.mp4") }
 
