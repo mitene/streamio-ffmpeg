@@ -135,6 +135,10 @@ module FFMPEG
         it "should be valid" do
           expect(movie).to be_valid
         end
+
+        it "should be not have reserved color descriptions" do
+          expect(movie.has_reserved_color_desc?).to be false
+        end
       end
 
       context "given a weird aspect ratio file" do
