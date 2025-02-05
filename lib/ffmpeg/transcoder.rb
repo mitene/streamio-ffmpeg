@@ -12,8 +12,7 @@ module FFMPEG
 
     def initialize(input, output_file, options = EncodingOptions.new, transcoder_options = {})
       if input.is_a?(FFMPEG::Movie)
-        @movie = input
-        @input = input.path
+        transcodable_movie(input)
       end
       @output_file = output_file
 
@@ -38,7 +37,12 @@ module FFMPEG
     end
 
     def run(&block)
-      transcode_movie(&block)
+      begin
+        transcode_movie(&block)
+      ensure
+        FileUtils.remove_entry(@tempdir) if @tempdir && Dir.exist?(@tempdir)
+      end
+
       if @transcoder_options[:validate]
         validate_output_file(&block)
         return encoded
@@ -60,15 +64,46 @@ module FFMPEG
     end
 
     private
-    def convert_reserved_color_descriptions_option
-      metadata = @input.reserved_color_descriptions.map { |attr| "#{attr}=1" }.join(':')
-      {
-        custom: [
-          "-bsf:v", # Bitstream filterでvideoを指定
-          "h264_metadata=#{metadata}", #h264_metadataフィルタをすべてBT709に変換
-          "-c", "copy" #別ファイルにcopy
-        ]
-      }
+    def transcodable_movie(movie)
+      if movie.has_reserved_color_desc?
+        @tempdir = Dir.mktmpdir
+        converted_movie_path = convert_reserved_color_descriptions(movie, @tempdir)
+
+        @movie = FFMEPG::Movie.new(converted_movie_path)
+        @input = converted_movie_path
+      else
+        @movie = movie
+        @input = movie.path
+      end
+    end
+
+    def convert_reserved_color_descriptions(movie, output_path)
+      output_file = "#{output_path}/convert_reserved_to_bt709.mp4"
+      metadata = movie.reserved_color_descriptions.map { |attr| "#{attr}=1" }.join(':')
+      command = [
+        FFMPEG.ffmpeg_binary, '-y',
+        '-i', movie.path,
+        "-bsf:v", "h264_metadata=#{metadata}", #Bitstream filterでvideoを指定し、color descriptionをBT709に変換
+        "-c", "copy", #別ファイルにcopy
+        output_file
+      ]
+
+      Open3.popen3(*command) do |_stdin, stdout, stderr, wait_thr|
+        begin
+          @output = stdout.read
+
+          if timeout
+              stderr.each_with_timeout(wait_thr.pid, timeout, 'size=', &next_line)
+          end
+
+        @errors << "ffmpeg returned non-zero exit code" unless wait_thr.value.success?
+        rescue Timeout::Error => e
+          FFMPEG.logger.error "Process hung...\n@command\n#{command}\nOutput\n#{@output}\n"
+          raise Error, "Process hung. Full output: #{@output}"
+        end
+      end
+
+      output_file
     end
 
     # frame= 4855 fps= 46 q=31.0 size=   45306kB time=00:02:42.28 bitrate=2287.0kbits/
