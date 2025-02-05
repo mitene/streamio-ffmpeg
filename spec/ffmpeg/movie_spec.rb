@@ -139,6 +139,10 @@ module FFMPEG
         it "should have reserved color descriptions" do
           expect(movie.has_reserved_color_desc?).to be true
         end
+
+        it "should return all reserved color descriptions" do
+          expect(movie.reserved_color_descs).to eq(["matrix_coefficients", "colour_primaries", "transfer_characteristics"])
+        end
       end
 
       context "given a file with reserved color primaries" do
@@ -150,6 +154,10 @@ module FFMPEG
 
         it "should have reserved color descriptions" do
           expect(movie.has_reserved_color_desc?).to be true
+        end
+
+        it "should return colour_primaries" do
+          expect(movie.reserved_color_descs).to eq(["colour_primaries"])
         end
       end
 
@@ -163,6 +171,10 @@ module FFMPEG
         it "should have reserved color descriptions" do
           expect(movie.has_reserved_color_desc?).to be true
         end
+
+        it "should return transfer_characteristics" do
+          expect(movie.reserved_color_descs).to eq(["transfer_characteristics"])
+        end
       end
 
       context "given a file with all reserved colorspace" do
@@ -174,6 +186,10 @@ module FFMPEG
 
         it "should have reserved color descriptions" do
           expect(movie.has_reserved_color_desc?).to be true
+        end
+
+        it "should return matrix_coefficients" do
+          expect(movie.reserved_color_descs).to eq(["matrix_coefficients"])
         end
       end
 

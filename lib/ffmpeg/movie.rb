@@ -215,6 +215,12 @@ module FFMPEG
                                end
     end
 
+    def reserved_color_descs
+      %w(matrix_coefficients colour_primaries transfer_characteristics).select do |attr|
+        instance_variable_get("@#{attr}") == 'reserved'
+      end
+    end
+
     def transcode(output_file, options = EncodingOptions.new, transcoder_options = {}, &block)
       Transcoder.new(self, output_file, options, transcoder_options).run &block
     end
