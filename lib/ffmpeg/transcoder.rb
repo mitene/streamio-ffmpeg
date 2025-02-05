@@ -60,6 +60,17 @@ module FFMPEG
     end
 
     private
+    def convert_reserved_color_descriptions_option
+      metadata = @input.reserved_color_descriptions.map { |attr| "#{attr}=1" }.join(':')
+      {
+        custom: [
+          "-bsf:v", # Bitstream filterでvideoを指定
+          "h264_metadata=#{metadata}", #h264_metadataフィルタをすべてBT709に変換
+          "-c", "copy" #別ファイルにcopy
+        ]
+      }
+    end
+
     # frame= 4855 fps= 46 q=31.0 size=   45306kB time=00:02:42.28 bitrate=2287.0kbits/
     def transcode_movie
       FFMPEG.logger.info("Running transcoding...\n#{command}\n")
