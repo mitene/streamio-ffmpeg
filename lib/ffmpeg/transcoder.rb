@@ -69,7 +69,7 @@ module FFMPEG
         @tempdir = Dir.mktmpdir
         converted_movie_path = convert_reserved_color_descriptions(movie, @tempdir)
 
-        @movie = FFMEPG::Movie.new(converted_movie_path)
+        @movie = FFMPEG::Movie.new(converted_movie_path)
         @input = converted_movie_path
       else
         @movie = movie

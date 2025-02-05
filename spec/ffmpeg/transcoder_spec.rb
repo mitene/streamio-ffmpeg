@@ -24,6 +24,15 @@ module FFMPEG
           expect { Transcoder.new(movie, output_path, "string?") }.to raise_error(ArgumentError, /Unknown options format/)
         end
       end
+
+      context "with video has reserved color descriptions" do
+        let(:movie) { Movie.new("#{fixture_path}/movies/all_reserved_color_desc.mp4") }
+        let(:output_path) { "#{tmp_path}/converted.mp4" }
+
+        it "should not get errors" do
+          expect { Transcoder.new(movie, output_path) }.not_to raise_error
+        end
+      end
     end
 
     describe "transcoding" do
