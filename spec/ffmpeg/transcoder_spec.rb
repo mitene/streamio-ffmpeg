@@ -5,22 +5,24 @@ module FFMPEG
     let(:movie) { Movie.new("#{fixture_path}/movies/awesome movie.mov") }
 
     describe "initialization" do
-      let(:output_path) { "#{tmp_path}/awesome.flv" }
+      context "with default" do
+        let(:output_path) { "#{tmp_path}/awesome.flv" }
 
-      it "should accept EncodingOptions as options" do
-        expect { Transcoder.new(movie, output_path, EncodingOptions.new) }.not_to raise_error
-      end
+        it "should accept EncodingOptions as options" do
+          expect { Transcoder.new(movie, output_path, EncodingOptions.new) }.not_to raise_error
+        end
 
-      it "should accept Hash as options" do
-        expect { Transcoder.new(movie, output_path, video_codec: "libx264") }.not_to raise_error
-      end
+        it "should accept Hash as options" do
+          expect { Transcoder.new(movie, output_path, video_codec: "libx264") }.not_to raise_error
+        end
 
-      it 'should accept Array as options' do
-        expect { Transcoder.new(movie, output_path, %w(-vcodec libx264)) }.not_to raise_error
-      end
+        it 'should accept Array as options' do
+          expect { Transcoder.new(movie, output_path, %w(-vcodec libx264)) }.not_to raise_error
+        end
 
-      it "should not accept anything else as options" do
-        expect { Transcoder.new(movie, output_path, "string?") }.to raise_error(ArgumentError, /Unknown options format/)
+        it "should not accept anything else as options" do
+          expect { Transcoder.new(movie, output_path, "string?") }.to raise_error(ArgumentError, /Unknown options format/)
+        end
       end
     end
 
