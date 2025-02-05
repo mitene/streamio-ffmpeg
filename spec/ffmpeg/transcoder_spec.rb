@@ -258,6 +258,37 @@ module FFMPEG
           end
         end
       end
+
+      context "with reserved color descriptions" do
+        let(:movie) { Movie.new("#{fixture_path}/movies/all_reserved_color_desc.mp4") }
+
+        context "making screenshot" do
+          let(:output_path) { "#{tmp_path}/converted_with_reserved_color_desc.png" }
+
+          it "should not raise an error making screenshot" do
+            FileUtils.rm_f output_path
+
+            options = ['-ss', '00:00:05', '-vframes', '1', '-q:v', '2']
+            expect { Transcoder.new(movie, output_path, options, validate: false).run }.not_to raise_error
+            expect(File.exist?(output_path)).to be_truthy
+          end
+        end
+
+        context "transcoding with videof filter" do
+          let(:output_path) { "#{tmp_path}/transcode_with_reserved_color_desc.mp4" }
+
+          it "should not raise an error transcoding the movie" do
+            FileUtils.rm_f output_path
+
+            expect { Transcoder.new(movie, output_path, ['-pix_fmt', 'yuv444p']).run }.not_to raise_error
+            expect(File.exist?(output_path)).to be_truthy
+            movie = FFMPEG::Movie.new(output_path)
+
+            expect(movie.colorspace).to eq('yuv444p')
+            expect(movie.reserved_color_descriptions).to be_empty
+          end
+        end
+      end
     end
 
     describe 'watermarking' do
