@@ -80,7 +80,7 @@ module FFMPEG
           @video_codec = video_stream[:codec_name]
           @colorspace = video_stream[:pix_fmt]
           # bfsで指定する形式と名前を同じにする
-          @matrix_coefficients = video_stream[:colorspace]
+          @matrix_coefficients = video_stream[:color_space]
           @colour_primaries = video_stream[:color_primaries]
           @transfer_characteristics = video_stream[:color_transfer]
           @width = video_stream[:width]

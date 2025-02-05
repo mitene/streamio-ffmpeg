@@ -141,6 +141,42 @@ module FFMPEG
         end
       end
 
+      context "given a file with reserved color primaries" do
+        let(:movie) { Movie.new("#{fixture_path}/movies/reserved_color_primaries.mp4") }
+
+        it "should be valid" do
+          expect(movie).to be_valid
+        end
+
+        it "should have reserved color descriptions" do
+          expect(movie.has_reserved_color_desc?).to be true
+        end
+      end
+
+      context "given a file with reserved color transfer" do
+        let(:movie) { Movie.new("#{fixture_path}/movies/reserved_color_transfer.mp4") }
+
+        it "should be valid" do
+          expect(movie).to be_valid
+        end
+
+        it "should have reserved color descriptions" do
+          expect(movie.has_reserved_color_desc?).to be true
+        end
+      end
+
+      context "given a file with all reserved colorspace" do
+        let(:movie) { Movie.new("#{fixture_path}/movies/reserved_colorspace.mp4") }
+
+        it "should be valid" do
+          expect(movie).to be_valid
+        end
+
+        it "should have reserved color descriptions" do
+          expect(movie.has_reserved_color_desc?).to be true
+        end
+      end
+
       context "given a file with data streams" do
         let(:movie) { Movie.new("#{fixture_path}/movies/file_with_data_streams.mp4") }
 
