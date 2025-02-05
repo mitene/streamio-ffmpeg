@@ -215,7 +215,7 @@ module FFMPEG
                                end
     end
 
-    def reserved_color_descs
+    def reserved_color_descriptions
       %w(matrix_coefficients colour_primaries transfer_characteristics).select do |attr|
         instance_variable_get("@#{attr}") == 'reserved'
       end
