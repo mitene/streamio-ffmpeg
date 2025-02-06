@@ -32,6 +32,27 @@ module FFMPEG
         it "should not get errors" do
           expect { Transcoder.new(movie, output_path) }.not_to raise_error
         end
+
+        # reservedの変換はinit時に行われるのでここでテストする
+        context "when ffmpeg freezes" do
+          before do
+            @original_timeout = Transcoder.timeout
+            @original_ffmpeg_binary = FFMPEG.ffmpeg_binary
+
+            Transcoder.timeout = 1
+            FFMPEG.ffmpeg_binary = "#{fixture_path}/bin/ffmpeg-hanging"
+          end
+
+          it "should fail when the timeout is exceeded" do
+            expect(FFMPEG.logger).to receive(:error)
+            expect { Transcoder.new(movie, "#{tmp_path}/timeout.mp4") }.to raise_error(FFMPEG::Error, /Process hung/)
+          end
+
+          after do
+            Transcoder.timeout = @original_timeout
+            FFMPEG.ffmpeg_binary = @original_ffmpeg_binary
+          end
+        end
       end
     end
 
@@ -261,7 +282,6 @@ module FFMPEG
 
       context "with reserved color descriptions" do
         let(:movie) { Movie.new("#{fixture_path}/movies/all_reserved_color_desc.mp4") }
-
         let(:output_path) { "#{tmp_path}/transcode_with_reserved_color_desc.mp4" }
 
         it "should not raise an error transcoding to yuv444p" do
