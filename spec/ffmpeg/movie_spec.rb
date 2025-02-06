@@ -129,11 +129,79 @@ module FFMPEG
         end
       end
 
+      context "given a file with all reserved color descirptions" do
+        let(:movie) { Movie.new("#{fixture_path}/movies/all_reserved_color_desc.mp4") }
+
+        it "should be valid" do
+          expect(movie).to be_valid
+        end
+
+        it "should have reserved color descriptions" do
+          expect(movie.has_reserved_color_desc?).to be true
+        end
+
+        it "should return all reserved color descriptions" do
+          expect(movie.reserved_color_descriptions).to eq(["matrix_coefficients", "colour_primaries", "transfer_characteristics"])
+        end
+      end
+
+      context "given a file with reserved color primaries" do
+        let(:movie) { Movie.new("#{fixture_path}/movies/reserved_color_primaries.mp4") }
+
+        it "should be valid" do
+          expect(movie).to be_valid
+        end
+
+        it "should have reserved color descriptions" do
+          expect(movie.has_reserved_color_desc?).to be true
+        end
+
+        it "should return colour_primaries" do
+          expect(movie.reserved_color_descriptions).to eq(["colour_primaries"])
+        end
+      end
+
+      context "given a file with reserved color transfer" do
+        let(:movie) { Movie.new("#{fixture_path}/movies/reserved_color_transfer.mp4") }
+
+        it "should be valid" do
+          expect(movie).to be_valid
+        end
+
+        it "should have reserved color descriptions" do
+          expect(movie.has_reserved_color_desc?).to be true
+        end
+
+        it "should return transfer_characteristics" do
+          expect(movie.reserved_color_descriptions).to eq(["transfer_characteristics"])
+        end
+      end
+
+      context "given a file with all reserved colorspace" do
+        let(:movie) { Movie.new("#{fixture_path}/movies/reserved_colorspace.mp4") }
+
+        it "should be valid" do
+          expect(movie).to be_valid
+        end
+
+        it "should have reserved color descriptions" do
+          expect(movie.has_reserved_color_desc?).to be true
+        end
+
+        it "should return matrix_coefficients" do
+          expect(movie.reserved_color_descriptions).to eq(["matrix_coefficients"])
+        end
+      end
+
       context "given a file with data streams" do
         let(:movie) { Movie.new("#{fixture_path}/movies/file_with_data_streams.mp4") }
 
         it "should be valid" do
           expect(movie).to be_valid
+        end
+
+        it "should be not have reserved color descriptions" do
+          expect(movie.has_reserved_color_desc?).to be false
         end
       end
 

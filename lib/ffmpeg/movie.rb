@@ -6,7 +6,7 @@ require 'net/http'
 module FFMPEG
   class Movie
     attr_reader :path, :duration, :time, :bitrate, :rotation, :creation_time
-    attr_reader :video_stream, :video_codec, :video_bitrate, :colorspace, :width, :height, :sar, :dar, :frame_rate
+    attr_reader :video_stream, :video_codec, :video_bitrate, :colorspace, :matrix_coefficients, :colour_primaries, :transfer_characteristics, :width, :height, :sar, :dar, :frame_rate
     attr_reader :audio_streams, :audio_stream, :audio_codec, :audio_bitrate, :audio_sample_rate, :audio_channels, :audio_tags
     attr_reader :container
     attr_reader :metadata, :format_tags
@@ -79,6 +79,10 @@ module FFMPEG
         unless video_stream.nil?
           @video_codec = video_stream[:codec_name]
           @colorspace = video_stream[:pix_fmt]
+          # bfsで指定する形式と名前を同じにする
+          @matrix_coefficients = video_stream[:color_space]
+          @colour_primaries = video_stream[:color_primaries]
+          @transfer_characteristics = video_stream[:color_transfer]
           @width = video_stream[:width]
           @height = video_stream[:height]
           @video_bitrate = video_stream[:bit_rate].to_i
@@ -158,6 +162,15 @@ module FFMPEG
       not remote?
     end
 
+    # h264でyuv420pの時だけreservedかどうか判断する
+    def has_reserved_color_desc?
+      if @colorspace == 'yuv420p' && @video_codec == 'h264'
+        @matrix_coefficients == 'reserved' || @colour_primaries == 'reserved' || @transfer_characteristics == 'reserved'
+      else
+        false
+      end
+    end
+
     def width
       rotation.nil? || rotation == 180 ? @width : @height;
     end
@@ -200,6 +213,12 @@ module FFMPEG
                                  else
                                    'unknown'
                                end
+    end
+
+    def reserved_color_descriptions
+      %w(matrix_coefficients colour_primaries transfer_characteristics).select do |attr|
+        instance_variable_get("@#{attr}") == 'reserved'
+      end
     end
 
     def transcode(output_file, options = EncodingOptions.new, transcoder_options = {}, &block)

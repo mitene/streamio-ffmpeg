@@ -5,22 +5,54 @@ module FFMPEG
     let(:movie) { Movie.new("#{fixture_path}/movies/awesome movie.mov") }
 
     describe "initialization" do
-      let(:output_path) { "#{tmp_path}/awesome.flv" }
+      context "with default" do
+        let(:output_path) { "#{tmp_path}/awesome.flv" }
 
-      it "should accept EncodingOptions as options" do
-        expect { Transcoder.new(movie, output_path, EncodingOptions.new) }.not_to raise_error
+        it "should accept EncodingOptions as options" do
+          expect { Transcoder.new(movie, output_path, EncodingOptions.new) }.not_to raise_error
+        end
+
+        it "should accept Hash as options" do
+          expect { Transcoder.new(movie, output_path, video_codec: "libx264") }.not_to raise_error
+        end
+
+        it 'should accept Array as options' do
+          expect { Transcoder.new(movie, output_path, %w(-vcodec libx264)) }.not_to raise_error
+        end
+
+        it "should not accept anything else as options" do
+          expect { Transcoder.new(movie, output_path, "string?") }.to raise_error(ArgumentError, /Unknown options format/)
+        end
       end
 
-      it "should accept Hash as options" do
-        expect { Transcoder.new(movie, output_path, video_codec: "libx264") }.not_to raise_error
-      end
+      context "with video has reserved color descriptions" do
+        let(:movie) { Movie.new("#{fixture_path}/movies/all_reserved_color_desc.mp4") }
+        let(:output_path) { "#{tmp_path}/converted.mp4" }
 
-      it 'should accept Array as options' do
-        expect { Transcoder.new(movie, output_path, %w(-vcodec libx264)) }.not_to raise_error
-      end
+        it "should not get errors" do
+          expect { Transcoder.new(movie, output_path) }.not_to raise_error
+        end
 
-      it "should not accept anything else as options" do
-        expect { Transcoder.new(movie, output_path, "string?") }.to raise_error(ArgumentError, /Unknown options format/)
+        # reservedの変換はinit時に行われるのでここでテストする
+        context "when ffmpeg freezes" do
+          before do
+            @original_timeout = Transcoder.timeout
+            @original_ffmpeg_binary = FFMPEG.ffmpeg_binary
+
+            Transcoder.timeout = 1
+            FFMPEG.ffmpeg_binary = "#{fixture_path}/bin/ffmpeg-hanging"
+          end
+
+          it "should fail when the timeout is exceeded" do
+            expect(FFMPEG.logger).to receive(:error)
+            expect { Transcoder.new(movie, "#{tmp_path}/timeout.mp4") }.to raise_error(FFMPEG::Error, /Process hung/)
+          end
+
+          after do
+            Transcoder.timeout = @original_timeout
+            FFMPEG.ffmpeg_binary = @original_ffmpeg_binary
+          end
+        end
       end
     end
 
@@ -100,6 +132,23 @@ module FFMPEG
           expect(encoded.audio_codec).to match(/mp3/)
           expect(encoded.audio_sample_rate).to eq(22050)
           expect(encoded.audio_channels).to eq(1)
+        end
+
+        context "with using block" do
+          let(:movie) { Movie.new("#{fixture_path}/movies/file_with_data_streams.mp4") }
+          let(:output_path) { "#{tmp_path}/block.mp4" }
+          it "should transcode the movie" do
+            FileUtils.rm_f output_path
+
+            transcoder = Transcoder.new(movie, output_path, ['-pix_fmt', 'yuv444p'])
+            progeresses = []
+            expect { transcoder.run { |progress| progeresses << progress } }.not_to raise_error
+            expect(progeresses).to include(0.0, 1.0)
+            expect(File.exist?(output_path)).to be_truthy
+
+            generate_movie = FFMPEG::Movie.new(output_path)
+            expect(generate_movie.colorspace).to eq('yuv444p')
+          end
         end
 
         context 'audio only' do
@@ -245,6 +294,61 @@ module FFMPEG
             Transcoder.timeout = @original_timeout
             FFMPEG.ffmpeg_binary = @original_ffmpeg_binary
           end
+        end
+      end
+
+      context "with reserved color descriptions" do
+        let(:movie) { Movie.new("#{fixture_path}/movies/all_reserved_color_desc.mp4") }
+        let(:output_path) { "#{tmp_path}/transcode_with_reserved_color_desc.mp4" }
+
+        it "should not raise an error transcoding to yuv444p" do
+          FileUtils.rm_f output_path
+
+          expect { Transcoder.new(movie, output_path, ['-pix_fmt', 'yuv444p']).run }.not_to raise_error
+          expect(File.exist?(output_path)).to be_truthy
+
+          generate_movie = FFMPEG::Movie.new(output_path)
+          expect(generate_movie.colorspace).to eq('yuv444p')
+          expect(generate_movie.reserved_color_descriptions).to be_empty
+
+          # 元動画の方はmetadataが変換されていないか確認
+          expect(movie.reserved_color_descriptions).to eq(["matrix_coefficients", "colour_primaries", "transfer_characteristics"])
+        end
+
+        context "with using block" do
+          let(:movie) { Movie.new("#{fixture_path}/movies/file_with_data_streams.mp4") }
+          let(:output_path) { "#{tmp_path}/block_reserved.mp4" }
+          it "should transcode the movie" do
+            FileUtils.rm_f output_path
+
+            transcoder = Transcoder.new(movie, output_path, ['-pix_fmt', 'yuv444p'])
+            progeresses = []
+            expect { transcoder.run { |progress| progeresses << progress } }.not_to raise_error
+            expect(progeresses).to include(0.0, 1.0)
+            expect(File.exist?(output_path)).to be_truthy
+
+            generate_movie = FFMPEG::Movie.new(output_path)
+            expect(generate_movie.colorspace).to eq('yuv444p')
+          end
+        end
+      end
+
+      context "with reserved color descriptions" do
+        let(:movie) { Movie.new("#{fixture_path}/movies/reserved_color_primaries.mp4") }
+        let(:output_path) { "#{tmp_path}/transcode_with_reserved_color_primaries.mp4" }
+
+        it "should not raise an error transcoding to yuv444p" do
+          FileUtils.rm_f output_path
+
+          expect { Transcoder.new(movie, output_path, ['-pix_fmt', 'yuv444p']).run }.not_to raise_error
+          expect(File.exist?(output_path)).to be_truthy
+
+          generate_movie = FFMPEG::Movie.new(output_path)
+          expect(generate_movie.colorspace).to eq('yuv444p')
+          expect(generate_movie.reserved_color_descriptions).to be_empty
+
+          # 元動画の方はmetadataが変換されていないか確認
+          expect(movie.reserved_color_descriptions).to eq(["colour_primaries"])
         end
       end
     end
