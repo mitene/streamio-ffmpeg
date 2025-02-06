@@ -332,6 +332,25 @@ module FFMPEG
           end
         end
       end
+
+      context "with reserved color descriptions" do
+        let(:movie) { Movie.new("#{fixture_path}/movies/reserved_color_primaries.mp4") }
+        let(:output_path) { "#{tmp_path}/transcode_with_reserved_color_primaries.mp4" }
+
+        it "should not raise an error transcoding to yuv444p" do
+          FileUtils.rm_f output_path
+
+          expect { Transcoder.new(movie, output_path, ['-pix_fmt', 'yuv444p']).run }.not_to raise_error
+          expect(File.exist?(output_path)).to be_truthy
+
+          generate_movie = FFMPEG::Movie.new(output_path)
+          expect(generate_movie.colorspace).to eq('yuv444p')
+          expect(generate_movie.reserved_color_descriptions).to be_empty
+
+          # 元動画の方はmetadataが変換されていないか確認
+          expect(movie.reserved_color_descriptions).to eq(["colour_primaries"])
+        end
+      end
     end
 
     describe 'watermarking' do
