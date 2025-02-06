@@ -134,6 +134,23 @@ module FFMPEG
           expect(encoded.audio_channels).to eq(1)
         end
 
+        context "with using block" do
+          let(:movie) { Movie.new("#{fixture_path}/movies/file_with_data_streams.mp4") }
+          let(:output_path) { "#{tmp_path}/block.mp4" }
+          it "should transcode the movie" do
+            FileUtils.rm_f output_path
+
+            transcoder = Transcoder.new(movie, output_path, ['-pix_fmt', 'yuv444p'])
+            progeresses = []
+            expect { transcoder.run { |progress| progeresses << progress } }.not_to raise_error
+            expect(progeresses).to include(0.0, 1.0)
+            expect(File.exist?(output_path)).to be_truthy
+
+            generate_movie = FFMPEG::Movie.new(output_path)
+            expect(generate_movie.colorspace).to eq('yuv444p')
+          end
+        end
+
         context 'audio only' do
           let(:sound) { Movie.new("#{fixture_path}/sounds/hello.wav") }
           it 'should transcode without video' do
@@ -296,6 +313,23 @@ module FFMPEG
 
           # 元動画の方は変換されていないか確認
           expect(movie.reserved_color_descriptions).to eq(["matrix_coefficients", "colour_primaries", "transfer_characteristics"])
+        end
+
+        context "with using block" do
+          let(:movie) { Movie.new("#{fixture_path}/movies/file_with_data_streams.mp4") }
+          let(:output_path) { "#{tmp_path}/block_reserved.mp4" }
+          it "should transcode the movie" do
+            FileUtils.rm_f output_path
+
+            transcoder = Transcoder.new(movie, output_path, ['-pix_fmt', 'yuv444p'])
+            progeresses = []
+            expect { transcoder.run { |progress| progeresses << progress } }.not_to raise_error
+            expect(progeresses).to include(0.0, 1.0)
+            expect(File.exist?(output_path)).to be_truthy
+
+            generate_movie = FFMPEG::Movie.new(output_path)
+            expect(generate_movie.colorspace).to eq('yuv444p')
+          end
         end
       end
     end
