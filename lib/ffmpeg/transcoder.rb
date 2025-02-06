@@ -12,7 +12,7 @@ module FFMPEG
 
     def initialize(input, output_file, options = EncodingOptions.new, transcoder_options = {})
       if input.is_a?(FFMPEG::Movie)
-        prepare_movie(input)
+        @movie, @input = prepare_movie(input)
       end
       @output_file = output_file
 
@@ -69,11 +69,9 @@ module FFMPEG
         @tempdir = Dir.mktmpdir
         converted_movie_path = convert_reserved_color_descriptions(movie, @tempdir)
 
-        @movie = FFMPEG::Movie.new(converted_movie_path)
-        @input = converted_movie_path
+        [FFMPEG::Movie.new(converted_movie_path), converted_movie_path]
       else
-        @movie = movie
-        @input = movie.path
+        [movie, movie.path]
       end
     end
 
