@@ -309,10 +309,10 @@ module FFMPEG
 
           generate_movie = FFMPEG::Movie.new(output_path)
           expect(generate_movie.colorspace).to eq('yuv444p')
-          expect(generate_movie.reserved_color_descriptions).to be_empty
+          expect(generate_movie.unsupported_color_descriptions).to be_empty
 
-          # 元動画の方はmetadataが変換されていないか確認
-          expect(movie.reserved_color_descriptions).to eq(["matrix_coefficients", "colour_primaries", "transfer_characteristics"])
+          # Check if the metadata of the original movie has not been converted
+          expect(movie.unsupported_color_descriptions).to eq(["matrix_coefficients", "colour_primaries", "transfer_characteristics"])
         end
 
         context "with using block" do
@@ -345,10 +345,10 @@ module FFMPEG
 
           generate_movie = FFMPEG::Movie.new(output_path)
           expect(generate_movie.colorspace).to eq('yuv444p')
-          expect(generate_movie.reserved_color_descriptions).to be_empty
+          expect(generate_movie.unsupported_color_descriptions).to be_empty
 
-          # 元動画の方はmetadataが変換されていないか確認
-          expect(movie.reserved_color_descriptions).to eq(["colour_primaries"])
+          # Check if the metadata of the original movie has not been converted
+          expect(movie.unsupported_color_descriptions).to eq(["colour_primaries"])
         end
       end
     end

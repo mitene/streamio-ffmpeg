@@ -65,9 +65,10 @@ module FFMPEG
 
     private
     def prepare_movie(movie)
-      if movie.has_reserved_color_desc?
+      if movie.has_unsupported_color_desc?
+        p "Unsupported color description found. Converting to BT709."
         @tempdir = Dir.mktmpdir
-        converted_movie_path = convert_reserved_color_descriptions(movie, @tempdir)
+        converted_movie_path = convert_unsupported_color_descriptions(movie, @tempdir)
 
         [FFMPEG::Movie.new(converted_movie_path), converted_movie_path]
       else
@@ -75,9 +76,9 @@ module FFMPEG
       end
     end
 
-    def convert_reserved_color_descriptions(movie, output_path)
+    def convert_unsupported_color_descriptions(movie, output_path)
       output_file = "#{output_path}/convert_reserved_to_bt709.mp4"
-      metadata = movie.reserved_color_descriptions.map { |attr| "#{attr}=1" }.join(':')
+      metadata = movie.unsupported_color_descriptions.map { |attr| "#{attr}=1" }.join(':')
       command = [
         FFMPEG.ffmpeg_binary, '-y',
         '-i', movie.path,
