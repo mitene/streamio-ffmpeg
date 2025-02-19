@@ -137,11 +137,11 @@ module FFMPEG
         end
 
         it "should have reserved color descriptions" do
-          expect(movie.has_reserved_color_desc?).to be true
+          expect(movie.has_unsupported_color_desc?).to be true
         end
 
         it "should return all reserved color descriptions" do
-          expect(movie.reserved_color_descriptions).to eq(["matrix_coefficients", "colour_primaries", "transfer_characteristics"])
+          expect(movie.unsupported_color_descriptions).to eq(["matrix_coefficients", "colour_primaries", "transfer_characteristics"])
         end
       end
 
@@ -153,11 +153,11 @@ module FFMPEG
         end
 
         it "should have reserved color descriptions" do
-          expect(movie.has_reserved_color_desc?).to be true
+          expect(movie.has_unsupported_color_desc?).to be true
         end
 
         it "should return colour_primaries" do
-          expect(movie.reserved_color_descriptions).to eq(["colour_primaries"])
+          expect(movie.unsupported_color_descriptions).to eq(["colour_primaries"])
         end
       end
 
@@ -169,27 +169,30 @@ module FFMPEG
         end
 
         it "should have reserved color descriptions" do
-          expect(movie.has_reserved_color_desc?).to be true
+          expect(movie.has_unsupported_color_desc?).to be true
         end
 
         it "should return transfer_characteristics" do
-          expect(movie.reserved_color_descriptions).to eq(["transfer_characteristics"])
+          expect(movie.unsupported_color_descriptions).to eq(["transfer_characteristics"])
         end
       end
 
-      context "given a file with all reserved colorspace" do
-        let(:movie) { Movie.new("#{fixture_path}/movies/reserved_colorspace.mp4") }
+      movies = ['reserved_colorspace.mp4', 'ycgco_colorspace.mp4']
+      movies.each do |movie_file|
+        context "given a file with all reserved colorspace" do
+          let(:movie) { Movie.new("#{fixture_path}/movies/#{movie_file}") }
 
-        it "should be valid" do
-          expect(movie).to be_valid
-        end
+          it "should be valid" do
+            expect(movie).to be_valid
+          end
 
-        it "should have reserved color descriptions" do
-          expect(movie.has_reserved_color_desc?).to be true
-        end
+          it "should have reserved color descriptions" do
+            expect(movie.has_unsupported_color_desc?).to be true
+          end
 
-        it "should return matrix_coefficients" do
-          expect(movie.reserved_color_descriptions).to eq(["matrix_coefficients"])
+          it "should return matrix_coefficients" do
+            expect(movie.unsupported_color_descriptions).to eq(["matrix_coefficients"])
+          end
         end
       end
 
@@ -201,7 +204,7 @@ module FFMPEG
         end
 
         it "should be not have reserved color descriptions" do
-          expect(movie.has_reserved_color_desc?).to be false
+          expect(movie.has_unsupported_color_desc?).to be false
         end
       end
 

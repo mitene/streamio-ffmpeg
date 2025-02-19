@@ -162,10 +162,13 @@ module FFMPEG
       not remote?
     end
 
-    # h264でyuv420pの時だけreservedかどうか判断する
-    def has_reserved_color_desc?
+    # Detects if the video stream has unsupported color descriptions
+    def has_unsupported_color_desc?
       if @colorspace == 'yuv420p' && @video_codec == 'h264'
-        @matrix_coefficients == 'reserved' || @colour_primaries == 'reserved' || @transfer_characteristics == 'reserved'
+        @matrix_coefficients == 'reserved' ||
+        @matrix_coefficients == 'ycgco' ||
+        @colour_primaries == 'reserved' ||
+        @transfer_characteristics == 'reserved'
       else
         false
       end
@@ -215,9 +218,9 @@ module FFMPEG
                                end
     end
 
-    def reserved_color_descriptions
+    def unsupported_color_descriptions
       %w(matrix_coefficients colour_primaries transfer_characteristics).select do |attr|
-        instance_variable_get("@#{attr}") == 'reserved'
+        ['reserved', 'ycgco'].include?(instance_variable_get("@#{attr}"))
       end
     end
 
