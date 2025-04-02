@@ -98,7 +98,7 @@ module FFMPEG
     end
 
     def exec_command(command)
-      @output = ""
+      @output = +""
 
       Open3.popen3(*command) do |_stdin, _stdout, stderr, wait_thr|
         begin
